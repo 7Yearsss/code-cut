@@ -59,8 +59,9 @@ export default function App() {
     setPlaying(false);
   }
 
+  const ANIM_OUT = 0.4; // exit animation buffer (seconds)
   const activeLayers = (project?.layers ?? []).filter(
-    (l) => currentTime >= l.timeStart && currentTime < l.timeStart + l.duration
+    (l) => currentTime >= l.timeStart && currentTime < l.timeStart + l.duration + ANIM_OUT
   );
 
   return (
@@ -124,15 +125,41 @@ export default function App() {
   );
 }
 
+const ANIM_IN = 0.35;
+const ANIM_OUT_DUR = 0.4;
+
 function LayerRenderer({ layer, currentTime }: { layer: Layer; currentTime: number }) {
-  if (layer.type === "footage") return <FootageRenderer layer={layer} currentTime={currentTime} />;
-  if (layer.type === "lottie") return <LottieRenderer layer={layer} />;
-  if (layer.type === "subtitle") return <SubtitleRenderer layer={layer} />;
-  if (layer.type === "chart") return <ChartRenderer layer={layer} />;
-  if (layer.type === "counter") return <CounterRenderer layer={layer} currentTime={currentTime} />;
-  if (layer.type === "progress") return <ProgressRenderer layer={layer} currentTime={currentTime} />;
-  if (layer.type === "list") return <ListRenderer layer={layer} currentTime={currentTime} />;
-  return null;
+  const elapsed = currentTime - layer.timeStart;
+  const remaining = layer.timeStart + layer.duration - currentTime;
+
+  const enterP = Math.min(1, elapsed / ANIM_IN);
+  const exitP = remaining <= 0 ? Math.max(0, 1 - (Math.abs(remaining) / ANIM_OUT_DUR)) : 1;
+  const opacity = Math.min(enterP, exitP);
+  const translateY = (1 - Math.min(1, enterP)) * 18;
+
+  let inner: React.ReactNode = null;
+  if (layer.type === "footage") inner = <FootageRenderer layer={layer} currentTime={currentTime} />;
+  else if (layer.type === "lottie") inner = <LottieRenderer layer={layer} />;
+  else if (layer.type === "subtitle") inner = <SubtitleRenderer layer={layer} />;
+  else if (layer.type === "chart") inner = <ChartRenderer layer={layer} />;
+  else if (layer.type === "counter") inner = <CounterRenderer layer={layer} currentTime={currentTime} />;
+  else if (layer.type === "progress") inner = <ProgressRenderer layer={layer} currentTime={currentTime} />;
+  else if (layer.type === "list") inner = <ListRenderer layer={layer} currentTime={currentTime} />;
+
+  if (!inner) return null;
+
+  // footage fills the canvas — skip the animation wrapper so it doesn't shift
+  if (layer.type === "footage") return <>{inner}</>;
+
+  return (
+    <div style={{
+      position: "absolute", inset: 0, pointerEvents: "none",
+      opacity,
+      transform: `translateY(${translateY}px)`,
+    }}>
+      {inner}
+    </div>
+  );
 }
 
 function FootageRenderer({ layer, currentTime }: { layer: FootageLayer; currentTime: number }) {
