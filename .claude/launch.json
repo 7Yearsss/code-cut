@@ -5,7 +5,8 @@
       "name": "ui",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "ui", "dev"],
-      "port": 5173
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }
