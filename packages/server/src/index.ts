@@ -104,6 +104,143 @@ server.tool(
 );
 
 server.tool(
+  "chart_add",
+  "Add a data chart overlay (bar, line, pie, donut, or area). Great for visualizing numbers from your script — revenue, stats, comparisons.",
+  {
+    chart_type: z.enum(["bar", "line", "pie", "donut", "area"]).default("bar"),
+    theme: z.enum(["dark", "light", "minimal", "neon"]).default("dark"),
+    accent_color: z.string().default("#6366f1").describe("Primary accent color (hex)"),
+    title: z.string().optional(),
+    labels: z.array(z.string()).describe("Category labels or x-axis values"),
+    datasets: z.array(z.object({
+      name: z.string(),
+      values: z.array(z.number()),
+    })).describe("One or more data series"),
+    show_grid: z.boolean().default(true),
+    show_legend: z.boolean().default(false),
+    time_start: z.number().describe("When chart appears (seconds)"),
+    duration: z.number().describe("How long it shows (seconds)"),
+    x: z.number().default(5).describe("X position % of canvas"),
+    y: z.number().default(10).describe("Y position % of canvas"),
+    width: z.number().default(50).describe("Width % of canvas"),
+    height: z.number().default(70).describe("Height % of canvas"),
+  },
+  async ({ chart_type, theme, accent_color, title, labels, datasets, show_grid, show_legend, time_start, duration, x, y, width, height }) => {
+    const layer = project.addLayer({
+      type: "chart",
+      chartType: chart_type,
+      theme,
+      accentColor: accent_color,
+      title,
+      labels,
+      datasets,
+      showGrid: show_grid,
+      showLegend: show_legend,
+      timeStart: time_start,
+      duration,
+      position: { x, y, width, height },
+    });
+    return { content: [{ type: "text", text: `Chart layer added (id: ${layer.id}) — ${chart_type} chart with ${datasets.length} series.` }] };
+  }
+);
+
+server.tool(
+  "counter_add",
+  "Add an animated number counter that counts up from startValue to value over the layer duration. Good for KPIs, metrics, scores.",
+  {
+    value: z.number().describe("Final value to count to"),
+    start_value: z.number().default(0).describe("Starting value"),
+    prefix: z.string().default("").describe("Text before the number (e.g. '$', '¥')"),
+    suffix: z.string().default("").describe("Text after the number (e.g. '%', 'K', ' users')"),
+    font_size: z.number().default(96).describe("Font size in pixels"),
+    color: z.string().default("#ffffff").describe("Text color"),
+    align: z.enum(["left", "center", "right"]).default("center"),
+    vertical_align: z.enum(["top", "center", "bottom"]).default("center"),
+    time_start: z.number(),
+    duration: z.number(),
+  },
+  async ({ value, start_value, prefix, suffix, font_size, color, align, vertical_align, time_start, duration }) => {
+    const layer = project.addLayer({
+      type: "counter",
+      value,
+      startValue: start_value,
+      prefix,
+      suffix,
+      fontSize: font_size,
+      color,
+      align,
+      verticalAlign: vertical_align,
+      timeStart: time_start,
+      duration,
+    });
+    return { content: [{ type: "text", text: `Counter layer added (id: ${layer.id}): ${prefix}${start_value}→${value}${suffix}` }] };
+  }
+);
+
+server.tool(
+  "progress_add",
+  "Add a progress bar or circle indicator. Animates from 0% to the target value over the duration. Good for showing completion rates, loading states.",
+  {
+    variant: z.enum(["bar", "circle"]).default("bar"),
+    value: z.number().min(0).max(100).describe("Target percentage (0-100)"),
+    label: z.string().optional().describe("Optional label text"),
+    color: z.string().default("#6366f1").describe("Fill color"),
+    track_color: z.string().default("rgba(255,255,255,0.15)").describe("Track/background color"),
+    show_value: z.boolean().default(true),
+    time_start: z.number(),
+    duration: z.number(),
+    x: z.number().default(10),
+    y: z.number().default(40),
+    width: z.number().default(80),
+    height: z.number().default(20),
+  },
+  async ({ variant, value, label, color, track_color, show_value, time_start, duration, x, y, width, height }) => {
+    const layer = project.addLayer({
+      type: "progress",
+      variant,
+      value,
+      label,
+      color,
+      trackColor: track_color,
+      showValue: show_value,
+      timeStart: time_start,
+      duration,
+      position: { x, y, width, height },
+    });
+    return { content: [{ type: "text", text: `Progress layer added (id: ${layer.id}): ${variant} → ${value}%` }] };
+  }
+);
+
+server.tool(
+  "list_add",
+  "Add an animated list where items appear one by one over the duration. Good for bullet points, steps, feature lists from your script.",
+  {
+    items: z.array(z.string()).describe("List items in order"),
+    style: z.enum(["bullets", "numbered", "checkmarks", "steps"]).default("bullets"),
+    color: z.string().default("#ffffff"),
+    font_size: z.number().default(32),
+    align: z.enum(["left", "center", "right"]).default("left"),
+    vertical_align: z.enum(["top", "center", "bottom"]).default("center"),
+    time_start: z.number(),
+    duration: z.number(),
+  },
+  async ({ items, style, color, font_size, align, vertical_align, time_start, duration }) => {
+    const layer = project.addLayer({
+      type: "list",
+      items,
+      style,
+      color,
+      fontSize: font_size,
+      align,
+      verticalAlign: vertical_align,
+      timeStart: time_start,
+      duration,
+    });
+    return { content: [{ type: "text", text: `List layer added (id: ${layer.id}): ${items.length} items (${style})` }] };
+  }
+);
+
+server.tool(
   "layer_update",
   "Update any property of an existing layer. Only specify the fields you want to change.",
   {

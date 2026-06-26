@@ -2,44 +2,71 @@ import { WebSocketServer, WebSocket } from "ws";
 import { randomUUID } from "crypto";
 
 export interface FootageLayer {
-  id: string;
-  type: "footage";
-  src: string;
-  timeStart: number;
-  duration: number;
+  id: string; type: "footage";
+  src: string; timeStart: number; duration: number;
 }
-
 export interface LottieLayer {
-  id: string;
-  type: "lottie";
-  lottieJson: object;
-  timeStart: number;
-  duration: number;
+  id: string; type: "lottie";
+  lottieJson: object; timeStart: number; duration: number;
   position: { x: number; y: number; width: number; height: number };
   opacity: number;
 }
-
 export interface SubtitleLayer {
-  id: string;
-  type: "subtitle";
-  text: string;
-  timeStart: number;
-  duration: number;
-  style: {
-    color: string;
-    fontSize: number;
-    position: "bottom" | "top" | "center";
-  };
+  id: string; type: "subtitle";
+  text: string; timeStart: number; duration: number;
+  style: { color: string; fontSize: number; position: "bottom" | "top" | "center" };
+}
+export interface ChartDataset { name: string; values: number[] }
+export interface ChartLayer {
+  id: string; type: "chart";
+  chartType: "bar" | "line" | "pie" | "donut" | "area";
+  theme: "dark" | "light" | "minimal" | "neon";
+  accentColor: string;
+  title?: string;
+  labels: string[];
+  datasets: ChartDataset[];
+  showGrid: boolean;
+  showLegend: boolean;
+  timeStart: number; duration: number;
+  position: { x: number; y: number; width: number; height: number };
+}
+export interface CounterLayer {
+  id: string; type: "counter";
+  value: number; startValue: number;
+  prefix: string; suffix: string;
+  fontSize: number; color: string;
+  align: "left" | "center" | "right";
+  verticalAlign: "top" | "center" | "bottom";
+  timeStart: number; duration: number;
+}
+export interface ProgressLayer {
+  id: string; type: "progress";
+  variant: "bar" | "circle";
+  value: number; label?: string;
+  color: string; trackColor: string;
+  showValue: boolean;
+  timeStart: number; duration: number;
+  position: { x: number; y: number; width: number; height: number };
+}
+export interface ListLayer {
+  id: string; type: "list";
+  items: string[];
+  style: "bullets" | "numbered" | "checkmarks" | "steps";
+  color: string; fontSize: number;
+  align: "left" | "center" | "right";
+  verticalAlign: "top" | "center" | "bottom";
+  timeStart: number; duration: number;
 }
 
-export type Layer = FootageLayer | LottieLayer | SubtitleLayer;
+export type Layer =
+  | FootageLayer | LottieLayer | SubtitleLayer
+  | ChartLayer | CounterLayer | ProgressLayer | ListLayer;
 
-export interface Project {
-  id: string;
-  name: string;
-  duration: number;
-  layers: Layer[];
-}
+export interface Project { id: string; name: string; duration: number; layers: Layer[] }
+
+type AddLayer =
+  | Omit<FootageLayer, "id"> | Omit<LottieLayer, "id"> | Omit<SubtitleLayer, "id">
+  | Omit<ChartLayer, "id"> | Omit<CounterLayer, "id"> | Omit<ProgressLayer, "id"> | Omit<ListLayer, "id">;
 
 const WS_PORT = 8765;
 
@@ -75,7 +102,7 @@ export class ProjectManager {
     return this.project;
   }
 
-  addLayer(layer: Omit<FootageLayer, "id"> | Omit<LottieLayer, "id"> | Omit<SubtitleLayer, "id">): Layer {
+  addLayer(layer: AddLayer): Layer {
     const p = this.getProject();
     const newLayer = { ...layer, id: randomUUID() } as Layer;
     p.layers.push(newLayer);
@@ -84,7 +111,7 @@ export class ProjectManager {
     return newLayer;
   }
 
-  updateLayer(layerId: string, patch: Partial<Omit<Layer, "id" | "type">>): Layer | null {
+  updateLayer(layerId: string, patch: Record<string, unknown>): Layer | null {
     const p = this.getProject();
     const idx = p.layers.findIndex((l) => l.id === layerId);
     if (idx === -1) return null;

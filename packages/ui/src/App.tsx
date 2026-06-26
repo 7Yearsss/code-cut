@@ -2,6 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import Lottie from "lottie-react";
 import { useProject } from "./useProject.ts";
 import type { FootageLayer, LottieLayer, SubtitleLayer, Layer } from "./types.ts";
+import { ChartRenderer } from "./renderers/ChartRenderer.tsx";
+import { CounterRenderer } from "./renderers/CounterRenderer.tsx";
+import { ProgressRenderer } from "./renderers/ProgressRenderer.tsx";
+import { ListRenderer } from "./renderers/ListRenderer.tsx";
 
 const CANVAS_W = 1920;
 const CANVAS_H = 1080;
@@ -124,6 +128,10 @@ function LayerRenderer({ layer, currentTime }: { layer: Layer; currentTime: numb
   if (layer.type === "footage") return <FootageRenderer layer={layer} currentTime={currentTime} />;
   if (layer.type === "lottie") return <LottieRenderer layer={layer} />;
   if (layer.type === "subtitle") return <SubtitleRenderer layer={layer} />;
+  if (layer.type === "chart") return <ChartRenderer layer={layer} />;
+  if (layer.type === "counter") return <CounterRenderer layer={layer} currentTime={currentTime} />;
+  if (layer.type === "progress") return <ProgressRenderer layer={layer} currentTime={currentTime} />;
+  if (layer.type === "list") return <ListRenderer layer={layer} currentTime={currentTime} />;
   return null;
 }
 
@@ -201,6 +209,10 @@ const LAYER_COLORS: Record<string, string> = {
   footage: "#3b82f6",
   lottie: "#8b5cf6",
   subtitle: "#10b981",
+  chart: "#f59e0b",
+  counter: "#ec4899",
+  progress: "#06b6d4",
+  list: "#84cc16",
 };
 
 function LayerTrack({ layer, duration, currentTime }: { layer: Layer; duration: number; currentTime: number }) {
