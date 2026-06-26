@@ -6,6 +6,7 @@
     "build": "pnpm --filter ui build && pnpm --filter server build"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "tsx": "^4.19.2"
   }
 }

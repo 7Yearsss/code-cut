@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "code-cut": {
+      "command": "pnpm",
+      "args": ["exec", "tsx", "packages/server/src/index.ts"],
+      "cwd": "E:\\CodeCode\\code-cut"
+    }
+  }
+}
