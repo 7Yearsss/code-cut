@@ -6,6 +6,8 @@ import { ChartRenderer } from "./renderers/ChartRenderer.tsx";
 import { CounterRenderer } from "./renderers/CounterRenderer.tsx";
 import { ProgressRenderer } from "./renderers/ProgressRenderer.tsx";
 import { ListRenderer } from "./renderers/ListRenderer.tsx";
+import { SubtitleRenderer } from "./renderers/SubtitleRenderer.tsx";
+import { BackgroundRenderer } from "./renderers/BackgroundRenderer.tsx";
 
 const CANVAS_W = 1920;
 const CANVAS_H = 1080;
@@ -59,10 +61,13 @@ export default function App() {
     setPlaying(false);
   }
 
-  const ANIM_OUT = 0.4; // exit animation buffer (seconds)
-  const activeLayers = (project?.layers ?? []).filter(
-    (l) => currentTime >= l.timeStart && currentTime < l.timeStart + l.duration + ANIM_OUT
-  );
+  const ANIM_OUT = 0.4;
+  const allLayers = project?.layers ?? [];
+  // backgrounds render first (below everything else)
+  const activeLayers = [
+    ...allLayers.filter((l) => l.type === "background"),
+    ...allLayers.filter((l) => l.type !== "background"),
+  ].filter((l) => currentTime >= l.timeStart && currentTime < l.timeStart + l.duration + ANIM_OUT);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#0a0a0a" }}>
@@ -137,19 +142,19 @@ function LayerRenderer({ layer, currentTime }: { layer: Layer; currentTime: numb
   const opacity = Math.min(enterP, exitP);
   const translateY = (1 - Math.min(1, enterP)) * 18;
 
+  // subtitle & background manage their own animation
+  if (layer.type === "subtitle") return <SubtitleRenderer layer={layer} currentTime={currentTime} />;
+  if (layer.type === "background") return <BackgroundRenderer layer={layer} />;
+  if (layer.type === "footage") return <FootageRenderer layer={layer} currentTime={currentTime} />;
+
   let inner: React.ReactNode = null;
-  if (layer.type === "footage") inner = <FootageRenderer layer={layer} currentTime={currentTime} />;
-  else if (layer.type === "lottie") inner = <LottieRenderer layer={layer} />;
-  else if (layer.type === "subtitle") inner = <SubtitleRenderer layer={layer} />;
+  if (layer.type === "lottie") inner = <LottieRenderer layer={layer} />;
   else if (layer.type === "chart") inner = <ChartRenderer layer={layer} />;
   else if (layer.type === "counter") inner = <CounterRenderer layer={layer} currentTime={currentTime} />;
   else if (layer.type === "progress") inner = <ProgressRenderer layer={layer} currentTime={currentTime} />;
   else if (layer.type === "list") inner = <ListRenderer layer={layer} currentTime={currentTime} />;
 
   if (!inner) return null;
-
-  // footage fills the canvas — skip the animation wrapper so it doesn't shift
-  if (layer.type === "footage") return <>{inner}</>;
 
   return (
     <div style={{
@@ -199,43 +204,11 @@ function LottieRenderer({ layer }: { layer: LottieLayer }) {
   );
 }
 
-function SubtitleRenderer({ layer }: { layer: SubtitleLayer }) {
-  const { style, text } = layer;
-  const posMap = { bottom: "10%", center: "50%", top: "10%" };
-  const alignMap = { bottom: "flex-end", center: "center", top: "flex-start" };
-  return (
-    <div
-      style={{
-        position: "absolute",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: alignMap[style.position] as "flex-end" | "center" | "flex-start",
-        alignItems: "center",
-        padding: `${posMap[style.position]} 5%`,
-        pointerEvents: "none",
-      }}
-    >
-      <span
-        style={{
-          color: style.color,
-          fontSize: `${style.fontSize}px`,
-          fontWeight: 700,
-          textShadow: "0 2px 8px rgba(0,0,0,0.8)",
-          textAlign: "center",
-          lineHeight: 1.3,
-        }}
-      >
-        {text}
-      </span>
-    </div>
-  );
-}
-
 const LAYER_COLORS: Record<string, string> = {
   footage: "#3b82f6",
   lottie: "#8b5cf6",
   subtitle: "#10b981",
+  background: "#374151",
   chart: "#f59e0b",
   counter: "#ec4899",
   progress: "#06b6d4",

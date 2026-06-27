@@ -14,6 +14,16 @@ export interface SubtitleLayer {
   id: string; type: "subtitle";
   text: string; timeStart: number; duration: number;
   style: { color: string; fontSize: number; position: "bottom" | "top" | "center" };
+  animation?: "word-spring" | "typewriter" | "cinematic" | "fade";
+}
+
+export interface BackgroundLayer {
+  id: string; type: "background";
+  variant: "gradient" | "mesh" | "noise" | "solid";
+  colors: string[];
+  opacity: number;
+  animated: boolean;
+  timeStart: number; duration: number;
 }
 
 export interface ChartDataset { name: string; values: number[] }
@@ -65,7 +75,7 @@ export interface ListLayer {
 }
 
 export type Layer =
-  | FootageLayer | LottieLayer | SubtitleLayer
+  | FootageLayer | LottieLayer | SubtitleLayer | BackgroundLayer
   | ChartLayer | CounterLayer | ProgressLayer | ListLayer;
 
 export interface Project {

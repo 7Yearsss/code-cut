@@ -77,29 +77,56 @@ server.tool(
 
 server.tool(
   "subtitle_add",
-  "Add a subtitle/text overlay to the project.",
+  "Add a subtitle/text overlay. Choose animation style: word-spring (bouncy, energetic), cinematic (clip-reveal, film-like), typewriter (character-by-character), fade (simple).",
   {
     text: z.string().describe("Subtitle text content"),
     time_start: z.number().describe("When subtitle appears (seconds)"),
     duration: z.number().describe("How long subtitle shows (seconds)"),
     color: z.string().default("#ffffff").describe("Text color (hex)"),
-    font_size: z.number().default(48).describe("Font size in pixels"),
-    position: z.enum(["bottom", "top", "center"]).default("bottom"),
+    font_size: z.number().default(64).describe("Font size in pixels"),
+    position: z.enum(["bottom", "top", "center"]).default("center"),
+    animation: z.enum(["word-spring", "typewriter", "cinematic", "fade"]).default("word-spring").describe("Entrance animation style"),
   },
-  async ({ text, time_start, duration, color, font_size, position }) => {
+  async ({ text, time_start, duration, color, font_size, position, animation }) => {
     const layer = project.addLayer({
       type: "subtitle",
       text,
       timeStart: time_start,
       duration,
       style: { color, fontSize: font_size, position },
+      animation,
     });
     return {
       content: [{
         type: "text",
-        text: `Subtitle layer added (id: ${layer.id}): "${text}"`,
+        text: `Subtitle layer added (id: ${layer.id}): "${text}" [${animation}]`,
       }],
     };
+  }
+);
+
+server.tool(
+  "background_add",
+  "Add a background layer. Use 'mesh' for animated gradient orbs (most cinematic), 'gradient' for static linear gradient, 'noise' for film-grain texture, 'solid' for flat color. Always add a background first for non-footage projects.",
+  {
+    variant: z.enum(["mesh", "gradient", "noise", "solid"]).default("mesh"),
+    colors: z.array(z.string()).default(["#6366f1", "#06b6d4", "#ec4899", "#10b981"]).describe("1-4 hex colors. For mesh: orb colors. For gradient: stop colors. For noise: base gradient. For solid: single color."),
+    opacity: z.number().min(0).max(1).default(1),
+    animated: z.boolean().default(true).describe("Whether the background animates (mesh only)"),
+    time_start: z.number().default(0),
+    duration: z.number(),
+  },
+  async ({ variant, colors, opacity, animated, time_start, duration }) => {
+    const layer = project.addLayer({
+      type: "background",
+      variant,
+      colors,
+      opacity,
+      animated,
+      timeStart: time_start,
+      duration,
+    });
+    return { content: [{ type: "text", text: `Background layer added (id: ${layer.id}): ${variant}` }] };
   }
 );
 
